@@ -1,0 +1,27 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - main  # ganti kalau branch utamamu bukan "main"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Create PEM file
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY }}" > key.pem
+          chmod 600 key.pem
+
+      - name: Copy file to EC2
+        run: |
+          scp -i key.pem -o StrictHostKeyChecking=no index.html ubuntu@3.107.184.176:/home/ubuntu/
+
+      - name: Move file to Nginx dir
+        run: |
+          ssh -i key.pem -o StrictHostKeyChecking=no ubuntu@3.107.184.176 "sudo mv /home/ubuntu/index.html /var/www/html/"
